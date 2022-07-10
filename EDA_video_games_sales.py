@@ -30,17 +30,6 @@ df=df_.copy()
 #Developer: Party responsible for creating the game
 #Rating: The ESRB ratings: E for “Everyone”; E10+ for “Everyone 10+”; T for “Teen”; M for “Mature”; AO for “Adults Only”; RP for
 
-#Motivation
-#You are working as a data analyst for a video game retailer based in Japan. The retailer typically orders games based on sales in North America and Europe,
-# as the games are often released later in Japan.
-# However, they have found that North American and European sales are not always a perfect predictor of how a game will sell in Japan.
-# Your manager has asked you to develop a model that can predict the sales in Japan using sales in North America and Europe and other attributes
-# such as the name of the game, the platform, the genre, and the publisher.
-# You will need to prepare a report that is accessible to a broad audience. It should outline your motivation, steps, findings, and conclusions.
-
-
-# By multiplying 1000000 we get the actual sale, (target variables)
-
 
 def check_df(dataframe, head=5,tail=5):
     print("##################### Shape #####################")
@@ -61,26 +50,28 @@ def check_df(dataframe, head=5,tail=5):
 check_df(df)
 
 
-# There are lots of null values in Critic_Score,....
+# There are lots of null values in 'Critic_Score', 'Critic_Count', 'User_Score', 'User_Count', 'Developer', 'Rating' (more than %25 of length of the data).
 # So we remove them
+
 for col in df.columns:
     if df[col].isnull().sum() > len(df)/4:
         df.drop(col,axis=1,inplace=True)
-# We remove the null values
+        
+# We remove the null values 
 df.dropna(inplace=True)
+
+# By multiplying 1000000 we get the actual sale, (target variables)
 
 for col in df.columns:
     if "Sales" in col:
         df[col]=(df[col]*1000000).astype("int")
-
-# how to manage it?
 
 df[df["Global_Sales"]==(df["NA_Sales"]+df["EU_Sales"]+df["JP_Sales"]+df["Other_Sales"])]
 df[df["Global_Sales"]!=(df["NA_Sales"]+df["EU_Sales"]+df["JP_Sales"]+df["Other_Sales"])]
 df[df["Global_Sales"] > (df["NA_Sales"]+df["EU_Sales"]+df["JP_Sales"]+df["Other_Sales"])+20000]
 df[df["Global_Sales"] < (df["NA_Sales"]+df["EU_Sales"]+df["JP_Sales"]+df["Other_Sales"])-20000]
 
-# we assign Global_Sales as sum of all Sale variables
+# We assign Global_Sales variable as sum of all Sale variables
 
 df["Global_Sales"]=df["NA_Sales"]+df["EU_Sales"]+df["JP_Sales"]+df["Other_Sales"]
 
@@ -89,9 +80,11 @@ df["Global_Sales"]=df["NA_Sales"]+df["EU_Sales"]+df["JP_Sales"]+df["Other_Sales"
 df["Year_of_Release"]=df["Year_of_Release"].astype("int")
 
 
-# Now there are 10 variables 16416 rows...
+# Now there are 10 variables 16416 rows.
 df.shape
 df.columns
+
+# Next, let's group the variables according to their types:
 
 def grab_col_names(dataframe, cat_th=10,  car_th=20):
     # cat_cols, cat_but_car
@@ -122,6 +115,7 @@ cat_cols, num_cols, cat_but_car = grab_col_names(df,40,60)
 
 
 #analyzing of categorical variables
+
 def cat_summary(dataframe, col_name):
     print(pd.DataFrame({col_name: dataframe[col_name].value_counts(),
                         "Ratio": 100 * dataframe[col_name].value_counts() / len(dataframe)}))
@@ -164,8 +158,8 @@ drop_list = high_correlated_cols(df, plot=True)
 # Global Sale and Year Relation
 df_global_year=df.groupby("Year_of_Release").agg({"Global_Sales":["max","min","sum","mean"]})
 df_global_year.reset_index(inplace=True)
-# Q: What are the top 5 years of release that are making high sales globally?
 
+# Q: What are the top 5 years of release that are making high sales globally?
 df_global_year.sort_values(by=("Global_Sales","sum"),ascending=False).head()
 
 # Regional (Japan) Sale and Year Relation
@@ -173,7 +167,6 @@ df_JP_year=df.groupby("Year_of_Release").agg({"JP_Sales":["max","min","sum","mea
 df_JP_year.reset_index(inplace=True)
 
 # Q: What are the top 5 years of release that are making high sales in Japan?
-
 df_JP_year.sort_values(by=("JP_Sales","sum"),ascending=False).head()
 
 # Q: What are the top 10 games making the most sales globally, in EU, in NA, in JP?
@@ -194,27 +187,20 @@ df.groupby("Platform").agg({"JP_Sales":"sum"}).sort_values("JP_Sales",ascending=
 df.groupby("Platform").agg({"Global_Sales":"sum"}).sort_values("Global_Sales",ascending=False).head()
 
 # Q: Which Publishers made the most sales globally , in EU, in NA, in JP?
-
 df.groupby("Publisher").agg({"Global_Sales":"sum"}).sort_values("Global_Sales",ascending=False).head()
 df.groupby("Publisher").agg({"NA_Sales":"sum"}).sort_values("NA_Sales",ascending=False).head()
 df.groupby("Publisher").agg({"JP_Sales":"sum"}).sort_values("JP_Sales",ascending=False).head()
 
 # Q: What Wii games were sold?
-
 df_Wii=df[df["Platform"]=="Wii"]
-df_Wii["JP_Sales"].sum()
-df_Wii["Global_Sales"].sum()
 df_Wii.Name.unique()[0:10]
 df_Wii.Name.nunique()
 
 # What PC-FX games were sold?
-
 df[df["Platform"]=="PCFX"]
 
 
 # What Misc games were sold?
-
 df_Misc=df[df["Genre"]=="Misc"]
 df_Misc.Name.unique() # games of kind Misc
 
-#  Analyze: Are some genres significantly more likely to perform better or worse in Japan than others? If so, which ones?
